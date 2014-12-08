@@ -118,7 +118,6 @@ MongoClient.connect("mongodb://" + config.database.host + ":" + config.database.
 	}
 	else {
 		db = dbConnection;
-console.log("Ingestion port: " + config.port);
 		http.createServer(app).listen(config.port);
 	}
 });
