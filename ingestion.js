@@ -23,7 +23,7 @@ bus.on("ready", function() {
 function log(data)
 {
 	
-	console.log("ingestion.js (pid: " + process.pid + ") > " + data);
+	console.log("[ingestion.js (pid: " + process.pid + ")] > " + data);
 }
 
 function sendPOSTResponse(response, data)
@@ -120,11 +120,11 @@ app.post("/v1", function(request, response) {
 
 MongoClient.connect("mongodb://" + config.database.host + ":" + config.database.port + "/" + config.database.name, function(err, dbConnection) {
 	if (err) {
-		console.log(err);
+		aiota.log("injestion.js", err);
 	}
 	else {
 		db = dbConnection;
 		http.createServer(app).listen(config.port);
-		log("ingestion.js has been started");
+		aiota.log("ingestion.js", "ingestion.js has been started");
 	}
 });
