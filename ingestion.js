@@ -118,13 +118,23 @@ app.post("/v1", function(request, response) {
 	});
 });
 
-MongoClient.connect("mongodb://" + config.database.host + ":" + config.database.port + "/" + config.database.name, function(err, dbConnection) {
+MongoClient.connect("mongodb://" + config.database.host + ":" + config.database.port + "/aiota", function(err, aiotaDB) {
 	if (err) {
-		aiota.log("injestion.js", err);
+		aiota.log(config.processName, err);
 	}
 	else {
-		db = dbConnection;
-		http.createServer(app).listen(config.port);
-		aiota.log("ingestion.js", "ingestion.js has been started");
+		aiota.processHeartbeat(config.processName, config.serverName, aiotaDB);
+		
+		MongoClient.connect("mongodb://" + config.database.host + ":" + config.database.port + "/" + config.database.name, function(err, dbConnection) {
+			if (err) {
+				aiota.log(config.processName, err);
+			}
+			else {
+				db = dbConnection;
+				http.createServer(app).listen(config.port);
+		
+				setInterval(function() { aiota.processHeartbeat(config.processName, config.serverName, aiotaDB); }, 10000);
+			}
+		});
 	}
 });

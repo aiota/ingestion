@@ -1,4 +1,4 @@
 server
 ======
 
-AIoTA Ingestion API server
+AiotA Ingestion API server

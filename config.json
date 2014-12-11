@@ -1,4 +1,6 @@
 {
+	"processName": "ingestion.js",
+	"serverName": "localhost",
 	"port": 10080,
 	"database": {
 		"host": "localhost",
