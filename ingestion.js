@@ -20,6 +20,12 @@ bus.on("ready", function() {
 	}
 });
 
+function log(data)
+{
+	
+	console.log("ingestion.js (pid: " + process.pid + ") > " + data);
+}
+
 function sendPOSTResponse(response, data)
 {
 	response.contentType("json");
@@ -119,5 +125,6 @@ MongoClient.connect("mongodb://" + config.database.host + ":" + config.database.
 	else {
 		db = dbConnection;
 		http.createServer(app).listen(config.port);
+		log("ingestion.js has been started");
 	}
 });
