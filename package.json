@@ -1,6 +1,6 @@
 {
 	"name": "aiota-ingestion",
-	"version": "0.0.7",
+	"version": "0.0.8",
 	"description": "AiotA Ingestion API",
 	"main": "ingestion.js",
 	"repository": {

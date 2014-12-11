@@ -10,6 +10,7 @@ var rpc = require("amqp-rpc").factory({ url: "amqp://" + config.amqp.login + ":"
 
 var bus = amqp.createConnection(config.amqp);
 
+var db = null;
 var queues = { "register-queue": false, "session-queue": false, "response-queue": false, "telemetry-queue": false };
 
 bus.on("ready", function() {
@@ -19,12 +20,6 @@ bus.on("ready", function() {
 		});
 	}
 });
-
-function log(data)
-{
-	
-	console.log("[ingestion.js (pid: " + process.pid + ")] > " + data);
-}
 
 function sendPOSTResponse(response, data)
 {
@@ -120,14 +115,14 @@ app.post("/v1", function(request, response) {
 
 MongoClient.connect("mongodb://" + config.database.host + ":" + config.database.port + "/aiota", function(err, aiotaDB) {
 	if (err) {
-		aiota.log(config.processName, err);
+		aiota.log(config.processName, config.serverName, aiotaDB, err);
 	}
 	else {
 		aiota.processHeartbeat(config.processName, config.serverName, aiotaDB);
 		
 		MongoClient.connect("mongodb://" + config.database.host + ":" + config.database.port + "/" + config.database.name, function(err, dbConnection) {
 			if (err) {
-				aiota.log(config.processName, err);
+				aiota.log(config.processName, config.serverName, aiotaDB, err);
 			}
 			else {
 				db = dbConnection;
