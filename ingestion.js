@@ -113,14 +113,14 @@ app.post("/v1", function(request, response) {
 	});
 });
 
-MongoClient.connect("mongodb://" + config.database.host + ":" + config.database.port + "/aiota", function(err, aiotaDB) {
+MongoClient.connect("mongodb://" + config.aiotaDatabase.host + ":" + config.aiotaDatabase.port + "/" + config.aiotaDatabase.name, function(err, aiotaDB) {
 	if (err) {
-		aiota.log(config.processName, config.serverName, aiotaDB, err);
+		aiota.log(config.processName, config.serverName, null, err);
 	}
 	else {
 		aiota.processHeartbeat(config.processName, config.serverName, aiotaDB);
 		
-		MongoClient.connect("mongodb://" + config.database.host + ":" + config.database.port + "/" + config.database.name, function(err, dbConnection) {
+		MongoClient.connect("mongodb://" + config.appDatabase.host + ":" + config.appDatabase.port + "/" + config.appDatabase.name, function(err, dbConnection) {
 			if (err) {
 				aiota.log(config.processName, config.serverName, aiotaDB, err);
 			}

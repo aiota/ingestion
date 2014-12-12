@@ -2,7 +2,12 @@
 	"processName": "ingestion.js",
 	"serverName": "localhost",
 	"port": 10080,
-	"database": {
+	"aiotaDatabase": {
+		"host": "localhost",
+		"name": "aiota",
+		"port": 27017
+	},
+	"appDatabase": {
 		"host": "localhost",
 		"name": "qaweb",
 		"port": 27017
