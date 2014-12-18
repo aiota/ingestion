@@ -3,23 +3,16 @@ var express = require("express");
 var cookieParser = require("cookie-parser");
 var methodOverride = require("method-override");
 var amqp = require("amqp");
+var amqprpc = require("amqp-rpc");
 var http = require("http");
 var MongoClient = require("mongodb").MongoClient;
-var config = require("./config");
-var rpc = require("amqp-rpc").factory({ url: "amqp://" + config.amqp.login + ":" + config.amqp.password + "@" + config.amqp.host + ":" + config.amqp.port });
 
-var bus = amqp.createConnection(config.amqp);
-
+var config = null;
+var processName = "ingestion.js";
 var db = null;
+var bus = null;
+var rpc = null;
 var queues = { "register-queue": false, "session-queue": false, "response-queue": false, "telemetry-queue": false };
-
-bus.on("ready", function() {
-	for (var q in queues) {
-		bus.queue(q, { autoDelete: false, durable: true }, function(queue) {
-			queues[queue.name] = true;
-		});
-	}
-});
 
 function sendPOSTResponse(response, data)
 {
@@ -113,25 +106,50 @@ app.post("/v1", function(request, response) {
 	});
 });
 
-MongoClient.connect("mongodb://" + config.aiotaDatabase.host + ":" + config.aiotaDatabase.port + "/" + config.aiotaDatabase.name, function(err, aiotaDB) {
+var args = process.argv.slice(2);
+ 
+MongoClient.connect("mongodb://" + args[0] + ":" + args[1] + "/" + args[2], function(err, aiotaDB) {
 	if (err) {
-		aiota.log(config.processName, config.serverName, null, err);
+		aiota.log(processName, "", null, err);
 	}
 	else {
-		MongoClient.connect("mongodb://" + config.appDatabase.host + ":" + config.appDatabase.port + "/" + config.appDatabase.name, function(err, dbConnection) {
-			if (err) {
-				aiota.log(config.processName, config.serverName, aiotaDB, err);
+		aiota.getConfig(aiotaDB, function(c) {
+			if (c == null) {
+				aiota.log(processName, "", aiotaDB, "Error getting config from database");
 			}
 			else {
-				db = dbConnection;
-				http.createServer(app).listen(config.port);
-		
-				setInterval(function() { aiota.heartbeat(config.processName, config.serverName, aiotaDB); }, 10000);
+				config = c;
 
-				process.on("SIGTERM", function() {
-					aiota.terminateProcess(config.processName, config.serverName, aiotaDB, function() {
-						process.exit(1);
-					});
+				MongoClient.connect("mongodb://" + config.database.host + ":" + config.ports.mongodb + "/" + config.database.name, function(err, dbConnection) {
+					if (err) {
+						aiota.log(processName, config.serverName, aiotaDB, err);
+					}
+					else {
+						db = dbConnection;
+
+						bus = amqp.createConnection(config.amqp);
+						
+						bus.on("ready", function() {
+							for (var q in queues) {
+								bus.queue(q, { autoDelete: false, durable: true }, function(queue) {
+									queues[queue.name] = true;
+								});
+							}
+						});
+						
+						rpc = amqprpc.factory({ url: "amqp://" + config.amqp.login + ":" + config.amqp.password + "@" + config.amqp.host + ":" + config.amqp.port });
+
+						var port = config.ports["aiota-ingestion"][0];
+						http.createServer(app).listen(port);
+				
+						setInterval(function() { aiota.heartbeat(processName, config.serverName, aiotaDB); }, 10000);
+		
+						process.on("SIGTERM", function() {
+							aiota.terminateProcess(processName, config.serverName, aiotaDB, function() {
+								process.exit(1);
+							});
+						});
+					}
 				});
 			}
 		});
